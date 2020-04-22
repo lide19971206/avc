@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.lide.shop.dao.ShopDao">
+	<resultMap type="Shop" id="rmp">
+		<id column="id" property="id"/>
+		<result column="name" property="name"/>
+		<result column="created" property="created"/>
+		<collection property="goods" ofType="Goods" select="selectGoodsByShopId" column="id">
+			<id column="id" property="id"/>
+			<result column="name" property="name"/>
+		</collection>
+	</resultMap>
+	<select id="selectGoods" resultType="Goods">
+		select * from goods
+	</select>
+	<select id="selectShops" resultMap="rmp">
+		select * from shop
+		<where>
+			<if test="name!=null and name!=''">
+				and name like '%${name}%'
+			</if>
+			<if test="sids!=null">
+				and id in
+				<foreach collection="sids" item="sid" open="(" separator="," close=")">
+					#{sid}
+				</foreach>
+			</if>
+		</where>
+	</select>
+	<select id="selectGoodsByShopId" resultType="Goods">
+		select g.* from goods g left join center c on(g.id=c.gid) where c.sid=#{id}
+	</select>
+	<select id="selectShopById" resultMap="rmp">
+		select * from shop
+		<where>
+			<if test="id!=null">
+				id = #{id}
+			</if>
+		</where>
+	</select>
+	<select id="selectShopByGids" resultType="int">
+		select s.id from shop s left join center c on(s.id=c.sid)  where c.gid in (${ids}) group by s.id 
+	</select>
+	<insert id="addShop" useGeneratedKeys="true" keyProperty="id">
+		insert into shop values(#{id},#{name},#{created})
+	</insert>
+	<insert id="addCenter">
+		insert into center values(null,#{sid},#{gid})
+	</insert>
+	<delete id="delCenter">
+		delete from center where sid in (${ids})
+	</delete>
+	<delete id="delShop">
+		delete from shop where id in (${ids})
+	</delete>
+</mapper>
